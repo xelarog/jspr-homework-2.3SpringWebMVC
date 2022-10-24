@@ -34,5 +34,10 @@ public class PostService {
             throw new NotFoundException();
     }
 
+    private boolean isRemovedOrNot() {
+        return true;
+    }
+
+
 }
 

@@ -4,11 +4,11 @@ import org.springframework.stereotype.Repository;
 import ru.netology.exception.NotFoundException;
 import ru.netology.model.Post;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Repository
 public class PostRepository {
@@ -17,16 +17,18 @@ public class PostRepository {
     private ConcurrentHashMap<Long, Post> posts = new ConcurrentHashMap<>();
 
     public List<Post> all() {
-        return new ArrayList<>(posts.values());
+        return posts.values().stream().filter(p -> !p.isRemoved()).collect(Collectors.toList());
     }
 
     public Optional<Post> getById(long id) {
         try {
+            if(checkRemovedFlag(id))
+                throwNotFoundException();
             return Optional.of(posts.get(id));
         } catch (NullPointerException e) {
-            throw new NotFoundException("пост не найден");
+            throwNotFoundException();
         }
-
+        return Optional.empty();
     }
 
     public Optional<Post> save(Post post) {
@@ -37,19 +39,29 @@ public class PostRepository {
             post.setId(idNext);
             posts.put(idNext, post);
         } else if (hasId(id)) {
+            if(checkRemovedFlag(id))
+                throwNotFoundException();
             posts.replace(id, post);
             return Optional.of(posts.get(id));
         } else {
-            throw new NotFoundException("пост не найден");
+            throwNotFoundException();
         }
         return Optional.of(post);
     }
 
     public void removeById(long id) {
-        posts.remove(id);
+        posts.get(id).setRemoved(true);
     }
 
     public boolean hasId(long id) {
         return posts.containsKey(id);
+    }
+
+    private void throwNotFoundException() {
+        throw new NotFoundException("пост не найден");
+    }
+
+    private boolean checkRemovedFlag(long id) {
+        return posts.get(id).isRemoved();
     }
 }
