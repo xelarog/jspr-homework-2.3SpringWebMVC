@@ -22,7 +22,7 @@ public class PostRepository {
 
     public Optional<Post> getById(long id) {
         try {
-            if(checkRemovedFlag(id))
+            if (checkRemovedFlag(id))
                 throwNotFoundException();
             return Optional.of(posts.get(id));
         } catch (NullPointerException e) {
@@ -38,8 +38,8 @@ public class PostRepository {
             long idNext = countId.incrementAndGet();
             post.setId(idNext);
             posts.put(idNext, post);
-        } else if (hasId(id)) {
-            if(checkRemovedFlag(id))
+        } else if (haveId(id)) {
+            if (checkRemovedFlag(id))
                 throwNotFoundException();
             posts.replace(id, post);
             return Optional.of(posts.get(id));
@@ -50,10 +50,14 @@ public class PostRepository {
     }
 
     public void removeById(long id) {
-        posts.get(id).setRemoved(true);
+        if (haveId(id)) {
+            if (checkRemovedFlag(id))
+                throw new NotFoundException();
+            posts.get(id).setRemoved(true);
+        }
     }
 
-    public boolean hasId(long id) {
+    public boolean haveId(long id) {
         return posts.containsKey(id);
     }
 
